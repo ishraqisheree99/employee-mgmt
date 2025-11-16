@@ -1,20 +1,24 @@
 // src/data/mockAttendance.js
-// Generate attendance data for the current month
-const generateCurrentMonthAttendance = (employeeId) => {
+// Generate comprehensive attendance data for the past 2 months
+const generateAttendanceData = (employeeId) => {
   try {
     const today = new Date();
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    
     const attendance = [];
     
-    for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(currentYear, currentMonth, day);
+    // Generate data for the past 60 days (about 2 months)
+    // This ensures we have data for weekly and monthly summaries
+    for (let daysAgo = 60; daysAgo >= 0; daysAgo--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - daysAgo);
       const dayOfWeek = date.getDay();
       
       // Skip weekends (Saturday = 6, Sunday = 0)
       if (dayOfWeek === 0 || dayOfWeek === 6) {
+        continue;
+      }
+      
+      // Skip today (today's attendance should be handled by check-in/check-out)
+      if (daysAgo === 0) {
         continue;
       }
       
@@ -24,15 +28,23 @@ const generateCurrentMonthAttendance = (employeeId) => {
       const checkIn = new Date(date);
       checkIn.setHours(checkInHour, checkInMinute, 0);
       
-      // Check-out between 5:00 PM and 6:30 PM (8-9 hours after check-in)
-      const workHours = 8 + Math.random() * 1.5;
+      // Work hours between 7.5 and 9.5 hours (realistic work day)
+      const workHours = 7.5 + Math.random() * 2;
       const checkOut = new Date(checkIn);
-      checkOut.setHours(checkIn.getHours() + Math.floor(workHours), checkIn.getMinute() + Math.floor((workHours % 1) * 60), 0);
+      const hoursToAdd = Math.floor(workHours);
+      const minutesToAdd = Math.floor((workHours % 1) * 60);
+      checkOut.setHours(checkIn.getHours() + hoursToAdd, checkIn.getMinutes() + minutesToAdd, 0);
       
+      // Occasionally skip a day (sick leave, vacation, etc.) - about 5% chance
+      if (Math.random() < 0.05) {
+        continue;
+      }
+      
+      const dateString = date.toISOString().split('T')[0];
       attendance.push({
-        id: `${employeeId}-${day}`,
+        id: `${employeeId}-${dateString}`,
         employeeId,
-        date: date.toISOString().split('T')[0],
+        date: dateString,
         checkIn: checkIn.toISOString(),
         checkOut: checkOut.toISOString(),
         workHours: parseFloat(workHours.toFixed(2)),
@@ -50,7 +62,9 @@ const generateCurrentMonthAttendance = (employeeId) => {
 // Export with error handling
 let MOCK_ATTENDANCE = [];
 try {
-  MOCK_ATTENDANCE = generateCurrentMonthAttendance('employee');
+  // Generate comprehensive attendance data for Alice Green
+  MOCK_ATTENDANCE = generateAttendanceData('alice.green@example.com');
+  console.log('Generated mock attendance records:', MOCK_ATTENDANCE.length);
 } catch (error) {
   console.error('Error generating mock attendance:', error);
   MOCK_ATTENDANCE = [];
@@ -60,6 +74,7 @@ export { MOCK_ATTENDANCE };
 
 // Calculate weekly summary
 export const getWeeklySummary = (attendance) => {
+  // ... (rest of this function is unchanged)
   if (!Array.isArray(attendance)) {
     return {
       daysPresent: 0,
@@ -97,6 +112,7 @@ export const getWeeklySummary = (attendance) => {
 
 // Calculate monthly summary
 export const getMonthlySummary = (attendance) => {
+  // ... (rest of this function is unchanged)
   if (!Array.isArray(attendance)) {
     return {
       daysPresent: 0,
@@ -123,7 +139,8 @@ export const getMonthlySummary = (attendance) => {
   // Calculate expected working days (excluding weekends)
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
   let expectedDays = 0;
-  for (let day = 1; day <= daysInMonth; day++) {
+  // Calculate expected days up to *today*
+  for (let day = 1; day <= today.getDate(); day++) {
     const date = new Date(currentYear, currentMonth, day);
     if (date.getDay() !== 0 && date.getDay() !== 6) {
       expectedDays++;
@@ -138,4 +155,3 @@ export const getMonthlySummary = (attendance) => {
     attendanceRate: expectedDays > 0 ? parseFloat(((monthAttendance.length / expectedDays) * 100).toFixed(1)) : 0,
   };
 };
-

@@ -1,7 +1,7 @@
 // src/components/Header.jsx
 import { Link, NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FaUser, FaSignOutAlt, FaHome, FaUsers } from 'react-icons/fa';
+import { FaUser, FaSignOutAlt, FaHome, FaUsers, FaUserCircle } from 'react-icons/fa'; // Import new icon
 
 export default function Header() {
   const { user, logout } = useAuth();
@@ -44,14 +44,29 @@ export default function Header() {
           <div className="flex items-center gap-4">
             {/* Display username and role */}
             <div className="hidden sm:flex items-center gap-3 text-gray-300">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600">
+              {/* NEW: Make the user icon a link to the profile */}
+              <Link
+                to="/profile"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 transition-colors hover:bg-blue-500"
+                title="View My Profile"
+              >
                 <FaUser size={14} className="text-white" />
-              </div>
+              </Link>
               <div className="text-right">
                 <p className="text-sm font-medium text-white">{user?.username}</p>
                 <p className="text-xs text-gray-400 capitalize">{user?.role}</p>
               </div>
             </div>
+
+            {/* NEW: Add a profile link for mobile */}
+            <Link
+              to="/profile"
+              className="rounded-lg p-2 text-gray-300 transition-colors hover:bg-gray-700 hover:text-white sm:hidden"
+              title="My Profile"
+            >
+              <FaUserCircle size={20} />
+            </Link>
+
             <button
               onClick={logout}
               className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"

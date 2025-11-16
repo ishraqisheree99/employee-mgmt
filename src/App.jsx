@@ -11,6 +11,9 @@ import EmployeeListPage from './pages/EmployeeList.jsx';
 import EmployeeAddPage from './pages/EmployeeAdd.jsx';
 import EmployeeEditPage from './pages/EmployeeEdit.jsx';
 import EmployeeViewPage from './pages/EmployeeView.jsx';
+import MyProfilePage from './pages/MyProfile.jsx';
+// NEW: Import the new task page
+import TaskAddPage from './pages/TaskAdd.jsx';
 
 function App() {
   const routes = useRoutes([
@@ -33,11 +36,15 @@ function App() {
           element: <DashboardPage />,
         },
         {
+          path: 'profile',
+          element: <MyProfilePage />,
+        },
+        {
           path: 'employees',
           element: <EmployeeListPage />,
         },
         {
-          path: 'employees/add', // path: '/employees/add'
+          path: 'employees/add', 
           element: (
             <ProtectedRoute managerOnly={true}> 
               <EmployeeAddPage />
@@ -45,14 +52,23 @@ function App() {
           ),
         },
         {
-          path: 'employees/view/:id', // path: '/employees/view/123'
+          path: 'employees/view/:id', 
           element: <EmployeeViewPage />,
         },
         {
-          path: 'employees/:id', // path: '/employees/123'
+          path: 'employees/:id', 
           element: (
             <ProtectedRoute managerOnly={true}>
               <EmployeeEditPage />
+            </ProtectedRoute>
+          ),
+        },
+        // NEW: Add the route for assigning tasks
+        {
+          path: 'tasks/add',
+          element: (
+            <ProtectedRoute managerOnly={true}>
+              <TaskAddPage />
             </ProtectedRoute>
           ),
         },

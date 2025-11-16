@@ -10,9 +10,12 @@ import {
   FaChartLine,
   FaStar,
   FaArrowUp,
-  FaArrowDown
+  FaArrowDown,
+  FaTasks // Make sure this is imported
 } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
+// Import the charts component
+import ManagerCharts from './ManagerCharts';
 
 export default function ManagerDashboard() {
   const { user } = useAuth();
@@ -48,20 +51,6 @@ export default function ManagerDashboard() {
       avgPerformance,
       recentHires,
     };
-  }, [employees]);
-
-  const departmentStats = useMemo(() => {
-    if (!Array.isArray(employees)) return [];
-    const deptCounts = {};
-    employees.forEach(emp => {
-      if (emp && emp.department) {
-        deptCounts[emp.department] = (deptCounts[emp.department] || 0) + 1;
-      }
-    });
-    return Object.entries(deptCounts)
-      .map(([dept, count]) => ({ dept, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
   }, [employees]);
 
   const recentEmployees = useMemo(() => {
@@ -174,46 +163,13 @@ export default function ManagerDashboard() {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        {/* Department Distribution - Takes 2 columns */}
-        <div className="xl:col-span-2 rounded-xl bg-white p-6 shadow-lg">
-          <h2 className="mb-4 text-xl font-semibold text-gray-900">Department Distribution</h2>
-          <div className="space-y-4">
-            {departmentStats.length > 0 ? (
-              departmentStats.map(({ dept, count }) => {
-                const percentage = (count / stats.total) * 100;
-                return (
-                  <div key={dept} className="group">
-                    <div className="mb-2 flex items-center justify-between text-sm">
-                      <span className="font-medium text-gray-700">{dept}</span>
-                      <span className="text-gray-500">{count} employees</span>
-                    </div>
-                    <div className="h-3 overflow-hidden rounded-full bg-gray-200">
-                      <div
-                        className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-500 group-hover:from-blue-600 group-hover:to-indigo-600"
-                        style={{ width: `${percentage}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <p className="text-gray-500">No department data available</p>
-            )}
-          </div>
-        </div>
+      {/* Charts section */}
+      <ManagerCharts employees={employees} />
 
-        {/* Recent Hires */}
+      {/* Recent Hires & Top Performers */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="rounded-xl bg-white p-6 shadow-lg">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-gray-900">Recent Hires</h2>
-            <Link
-              to="/employees"
-              className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
-            >
-              View all →
-            </Link>
-          </div>
+          <h2 className="mb-4 text-xl font-semibold text-gray-900">Recent Hires</h2>
           <div className="space-y-3">
             {recentEmployees.length > 0 ? (
               recentEmployees.map((emp) => (
@@ -251,10 +207,7 @@ export default function ManagerDashboard() {
             )}
           </div>
         </div>
-      </div>
 
-      {/* Top Performers */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="rounded-xl bg-white p-6 shadow-lg">
           <h2 className="mb-4 text-xl font-semibold text-gray-900">Top Performers</h2>
           <div className="space-y-3">
@@ -285,21 +238,32 @@ export default function ManagerDashboard() {
             )}
           </div>
         </div>
+      </div>
 
-        {/* Quick Actions */}
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 gap-6">
         <div className="rounded-xl bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 p-6 text-white shadow-xl">
           <h2 className="mb-4 text-xl font-semibold">Quick Actions</h2>
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row">
             <Link
               to="/employees/add"
-              className="flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-3 text-sm font-medium text-blue-600 transition-all hover:bg-blue-50 hover:scale-105 active:scale-95"
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-white px-4 py-3 text-sm font-medium text-blue-600 transition-all hover:bg-blue-50 hover:scale-105 active:scale-95"
             >
               <FaUsers />
               Add New Employee
             </Link>
+            
+            <Link
+              to="/tasks/add"
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-white/20 px-4 py-3 text-sm font-medium text-white backdrop-blur-sm transition-all hover:bg-white/30 hover:scale-105 active:scale-95"
+            >
+              <FaTasks />
+              Assign New Task
+            </Link>
+            
             <Link
               to="/employees"
-              className="flex items-center justify-center gap-2 rounded-lg bg-white/20 px-4 py-3 text-sm font-medium text-white backdrop-blur-sm transition-all hover:bg-white/30 hover:scale-105 active:scale-95"
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-white/20 px-4 py-3 text-sm font-medium text-white backdrop-blur-sm transition-all hover:bg-white/30 hover:scale-105 active:scale-95"
             >
               View All Employees
             </Link>

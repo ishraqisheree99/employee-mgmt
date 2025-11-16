@@ -243,35 +243,37 @@ export default function LoginPage() {
               </button>
             </form>
           
-            {/* Test Credentials */}
-            <div className="mt-8 rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <p className="mb-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
-                Quick Login (Demo)
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => quickLogin('manager', 'password')}
-                  disabled={isLoading}
-                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:opacity-50"
-                >
-                  <div className="text-xs text-gray-500">Manager</div>
-                  <div className="font-semibold">manager</div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => quickLogin('employee', 'password')}
-                  disabled={isLoading}
-                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:opacity-50"
-                >
-                  <div className="text-xs text-gray-500">Employee</div>
-                  <div className="font-semibold">employee</div>
-                </button>
-              </div>
-              <p className="mt-3 text-center text-xs text-gray-500">
-                Password: <span className="font-mono">password</span>
-              </p>
+{/* Test Credentials */}
+          <div className="mt-8 rounded-lg border border-gray-200 bg-gray-50 p-4">
+            <p className="mb-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
+              Quick Login (Demo)
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                // CHANGED: Update quick login credentials
+                onClick={() => quickLogin('bob.white@example.com', 'password')}
+                disabled={isLoading}
+                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:opacity-50"
+              >
+                <div className="text-xs text-gray-500">Manager</div>
+                <div className="font-semibold truncate">bob.white@...</div>
+              </button>
+              <button
+                type="button"
+                // CHANGED: Update quick login credentials
+                onClick={() => quickLogin('alice.green@example.com', 'password')}
+                disabled={isLoading}
+                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:opacity-50"
+              >
+                <div className="text-xs text-gray-500">Employee</div>
+                <div className="font-semibold truncate">alice.green@...</div>
+              </button>
             </div>
+            <p className="mt-3 text-center text-xs text-gray-500">
+              Password: <span className="font-mono">password</span>
+            </p>
+          </div>
           </div>
 
           {/* Footer */}

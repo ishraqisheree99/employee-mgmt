@@ -1,11 +1,12 @@
 // src/components/dashboards/EmployeeDashboard.jsx
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { useToast } from '../../context/ToastContext';
 import { MOCK_TASKS } from '../../data/mockTasks';
 import { MOCK_ATTENDANCE, getWeeklySummary, getMonthlySummary } from '../../data/mockAttendance';
 import { 
+  // ... (icons are unchanged)
   FaTasks, 
   FaClock, 
   FaCheckCircle, 
@@ -19,40 +20,98 @@ import {
 } from 'react-icons/fa';
 import { MdPendingActions, MdWork, MdFilterList } from 'react-icons/md';
 
-// Ensure MOCK_ATTENDANCE is always an array
 const SAFE_MOCK_ATTENDANCE = Array.isArray(MOCK_ATTENDANCE) ? MOCK_ATTENDANCE : [];
 
+// Debug: Log mock attendance data
+if (SAFE_MOCK_ATTENDANCE.length > 0) {
+  console.log('Mock attendance data available:', SAFE_MOCK_ATTENDANCE.length, 'records');
+  console.log('Sample record:', SAFE_MOCK_ATTENDANCE[0]);
+} else {
+  console.warn('WARNING: No mock attendance data available!');
+}
+
 export default function EmployeeDashboard() {
-  // All hooks must be called unconditionally first
   const { user } = useAuth();
   const toast = useToast();
   const [tasks, setTasks] = useLocalStorage('tasks', Array.isArray(MOCK_TASKS) ? MOCK_TASKS : []);
   const [attendance, setAttendance] = useLocalStorage('attendance', SAFE_MOCK_ATTENDANCE);
+  
+  // Local state for check-in time, remove checkOutTime
   const [checkInTime, setCheckInTime] = useState(null);
-  const [checkOutTime, setCheckOutTime] = useState(null);
+  
   const [selectedTaskFilter, setSelectedTaskFilter] = useState('all');
   
-  // Get success function safely
   const success = toast?.success || (() => {});
   
-  // Safety check after all hooks
+  // Remove today's attendance record on mount (so check-in/out resets each day/server restart)
+  useEffect(() => {
+    if (!user || !user.username) return;
+    
+    const today = new Date().toISOString().split('T')[0];
+    const todayRecordId = `${user.username}-${today}`;
+    
+    // Remove today's attendance record so user can check in fresh each day
+    if (Array.isArray(attendance)) {
+      const hasTodayRecord = attendance.some(record => record && record.id === todayRecordId);
+      if (hasTodayRecord) {
+        const filteredAttendance = attendance.filter(record => record && record.id !== todayRecordId);
+        setAttendance(filteredAttendance);
+      }
+    }
+  }, []); // Only run once on mount
+  
+  // Force load mock attendance data if none exists for this user
+  useEffect(() => {
+    if (!user || !user.username) return;
+    
+    if (Array.isArray(attendance) && SAFE_MOCK_ATTENDANCE.length > 0) {
+      const userAttendance = attendance.filter(record => {
+        if (!record || !record.employeeId) return false;
+        const today = new Date().toISOString().split('T')[0];
+        // Exclude today's record from count
+        return record.employeeId === user.username && record.date !== today;
+      });
+      if (userAttendance.length === 0) {
+        console.log('No attendance found for user, ensuring mock data is loaded');
+        // Check if mock data exists in attendance array
+        const hasMockData = attendance.some(record => record && record.employeeId === 'alice.green@example.com');
+        if (!hasMockData && user.username === 'alice.green@example.com') {
+          console.log('Loading mock attendance data for Alice Green');
+          setAttendance(SAFE_MOCK_ATTENDANCE);
+        }
+      }
+    }
+  }, [user, attendance, setAttendance]);
+  
   if (!user || !user.username) {
     return null;
   }
 
-  // Filter tasks for current employee
+  // ... (employeeTasks useMemo is unchanged)
   const employeeTasks = useMemo(() => {
     if (!Array.isArray(tasks)) return [];
     return tasks.filter(task => task && task.employeeId === user.username);
   }, [tasks, user.username]);
 
-  // Filter attendance for current employee
+  // ... (employeeAttendance useMemo is unchanged)
   const employeeAttendance = useMemo(() => {
-    if (!Array.isArray(attendance)) return [];
-    return attendance.filter(record => record && record.employeeId === user.username);
+    if (!Array.isArray(attendance)) {
+      console.log('Attendance is not an array:', attendance);
+      return [];
+    }
+    console.log('Total attendance records:', attendance.length, 'for user:', user.username);
+    const filtered = attendance.filter(record => {
+      if (!record || !record.employeeId) return false;
+      return record.employeeId === user.username;
+    });
+    console.log('Filtered attendance for', user.username, ':', filtered.length, 'records');
+    if (filtered.length === 0 && attendance.length > 0) {
+      console.log('Sample attendance record employeeId:', attendance[0]?.employeeId);
+    }
+    return filtered;
   }, [attendance, user.username]);
 
-  // Task statistics
+  // ... (taskStats useMemo is unchanged)
   const taskStats = useMemo(() => {
     const pending = employeeTasks.filter(t => t.status === 'pending').length;
     const inProgress = employeeTasks.filter(t => t.status === 'in-progress').length;
@@ -65,23 +124,23 @@ export default function EmployeeDashboard() {
     return { pending, inProgress, completed, overdue, total: employeeTasks.length };
   }, [employeeTasks]);
 
-  // Weekly summary
+  // ... (weeklySummary useMemo is unchanged)
   const weeklySummary = useMemo(() => {
     return getWeeklySummary(employeeAttendance);
   }, [employeeAttendance]);
 
-  // Monthly summary
+  // ... (monthlySummary useMemo is unchanged)
   const monthlySummary = useMemo(() => {
     return getMonthlySummary(employeeAttendance);
   }, [employeeAttendance]);
 
-  // Today's attendance
+  // Today's attendance - only show if user has checked in today
   const todayAttendance = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
-    return employeeAttendance.find(record => record.date === today);
+    return employeeAttendance.find(record => record && record.date === today);
   }, [employeeAttendance]);
 
-  // Filtered tasks
+  // ... (filteredTasks useMemo is unchanged)
   const filteredTasks = useMemo(() => {
     let filtered = employeeTasks;
     
@@ -100,8 +159,8 @@ export default function EmployeeDashboard() {
     
     return filtered.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
   }, [employeeTasks, selectedTaskFilter]);
-
-  // Upcoming tasks (next 7 days)
+  
+  // ... (upcomingTasks useMemo is unchanged)
   const upcomingTasks = useMemo(() => {
     const nextWeek = new Date();
     nextWeek.setDate(nextWeek.getDate() + 7);
@@ -115,34 +174,75 @@ export default function EmployeeDashboard() {
       .slice(0, 5);
   }, [employeeTasks]);
 
+
+  // CHANGED: handleCheckIn now saves to localStorage
   const handleCheckIn = () => {
     const now = new Date();
     const today = now.toISOString().split('T')[0];
     
-    // Check if already checked in today
     if (todayAttendance) {
       success('You have already checked in today!');
       return;
     }
     
-    setCheckInTime(now);
+    setCheckInTime(now); // For immediate UI update
+    
+    // Create new attendance record
+    const newRecord = {
+      id: `${user.username}-${today}`,
+      employeeId: user.username,
+      date: today,
+      checkIn: now.toISOString(),
+      checkOut: null, // Not checked out yet
+      workHours: 0,
+      status: 'present',
+    };
+    
+    // Save to localStorage
+    setAttendance([...attendance, newRecord]);
     success(`Checked in at ${now.toLocaleTimeString()}`);
   };
 
+  // CHANGED: handleCheckOut now updates localStorage
   const handleCheckOut = () => {
-    if (!checkInTime && !todayAttendance) {
-      success('Please check in first!');
+    const now = new Date();
+    
+    if (!todayAttendance) {
+      success('You must check in before you can check out!');
       return;
     }
     
-    const now = new Date();
-    const checkIn = checkInTime || (todayAttendance ? new Date(todayAttendance.checkIn) : now);
+    if (todayAttendance.checkOut) {
+      success('You have already checked out for the day.');
+      return;
+    }
+
+    const checkIn = new Date(todayAttendance.checkIn);
     const workHours = ((now - checkIn) / (1000 * 60 * 60)).toFixed(2);
     
-    setCheckOutTime(now);
+    // Update the record in localStorage with checkout info
+    setAttendance(prevAttendance => 
+      prevAttendance.map(record =>
+        record.id === todayAttendance.id
+          ? { ...record, checkOut: now.toISOString(), workHours: parseFloat(workHours) }
+          : record
+      )
+    );
+    
+    setCheckInTime(null); // Clear local state
     success(`Checked out at ${now.toLocaleTimeString()}. Worked ${workHours} hours`);
+    
+    // Remove today's record after a short delay so the button resets
+    // This allows them to check in again (useful for testing or if they need to check in again)
+    setTimeout(() => {
+      const today = new Date().toISOString().split('T')[0];
+      setAttendance(prevAttendance => 
+        prevAttendance.filter(record => record.id !== `${user.username}-${today}`)
+      );
+    }, 3000); // Remove after 3 seconds to allow user to see the success message
   };
 
+  // ... (handleTaskStatusChange is unchanged)
   const handleTaskStatusChange = (taskId, newStatus) => {
     setTasks(prevTasks => 
       prevTasks.map(task => 
@@ -158,6 +258,7 @@ export default function EmployeeDashboard() {
     success(`Task marked as ${newStatus.replace('-', ' ')}`);
   };
 
+  // ... (getPriorityColor is unchanged)
   const getPriorityColor = (priority) => {
     switch (priority) {
       case 'high': return 'bg-red-100 text-red-800 border-red-200';
@@ -167,6 +268,7 @@ export default function EmployeeDashboard() {
     }
   };
 
+  // ... (getStatusColor is unchanged)
   const getStatusColor = (status) => {
     switch (status) {
       case 'completed': return 'bg-green-100 text-green-800 border-green-200';
@@ -176,6 +278,7 @@ export default function EmployeeDashboard() {
     }
   };
 
+  // ... (StatCard component is unchanged)
   const StatCard = ({ icon: Icon, title, value, subtitle, color = 'blue', onClick }) => {
     const colors = {
       blue: 'bg-blue-500',
@@ -205,10 +308,14 @@ export default function EmployeeDashboard() {
       </div>
     );
   };
+  
+  // NEW: Determine current check-in state
+  const isCheckedIn = todayAttendance && !todayAttendance.checkOut;
+  const isCheckedOut = todayAttendance && todayAttendance.checkOut;
 
   return (
     <div className="w-full space-y-6 animate-fade-in px-2 sm:px-4 lg:px-6">
-      {/* Header */}
+      {/* ... (Header is unchanged) */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-4xl sm:text-5xl font-bold text-gray-900">My Dashboard</h1>
@@ -223,26 +330,31 @@ export default function EmployeeDashboard() {
         </div>
       </div>
 
-      {/* Check In/Out Section */}
+      {/* CHANGED: Check In/Out Section now reads from todayAttendance */}
       <div className="rounded-xl bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 p-6 sm:p-8 text-white shadow-xl">
         <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
           <div className="flex-1">
             <h2 className="text-2xl sm:text-3xl font-bold">Today's Attendance</h2>
             <p className="mt-2 text-lg text-blue-100">
-              {todayAttendance && todayAttendance.checkIn
+              {isCheckedIn
                 ? `Checked in at ${new Date(todayAttendance.checkIn).toLocaleTimeString()}`
-                : checkInTime
-                ? `Checked in at ${checkInTime.toLocaleTimeString()}`
+                : isCheckedOut
+                ? `Checked out at ${new Date(todayAttendance.checkOut).toLocaleTimeString()}`
                 : 'Not checked in yet'}
             </p>
-            {checkInTime && !checkOutTime && (
+            {isCheckedIn && (
               <p className="mt-1 text-sm text-blue-200">
-                Current session: {Math.floor((new Date() - checkInTime) / (1000 * 60))} minutes
+                Current session: {Math.floor((new Date() - new Date(todayAttendance.checkIn)) / (1000 * 60))} minutes
+              </p>
+            )}
+            {isCheckedOut && (
+              <p className="mt-1 text-sm text-blue-200">
+                Total hours: {todayAttendance.workHours}
               </p>
             )}
           </div>
           <div className="flex gap-3">
-            {!todayAttendance && !checkInTime ? (
+            {!isCheckedIn && !isCheckedOut ? (
               <button
                 onClick={handleCheckIn}
                 className="flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-lg font-semibold text-blue-600 transition-all hover:bg-blue-50 hover:scale-105 active:scale-95 shadow-lg"
@@ -253,18 +365,18 @@ export default function EmployeeDashboard() {
             ) : (
               <button
                 onClick={handleCheckOut}
-                disabled={checkOutTime !== null}
+                disabled={isCheckedOut}
                 className="flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-lg font-semibold text-blue-600 transition-all hover:bg-blue-50 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
               >
                 <FaSignOutAlt />
-                {checkOutTime ? 'Checked Out' : 'Check Out'}
+                {isCheckedOut ? 'Checked Out' : 'Check Out'}
               </button>
             )}
           </div>
         </div>
       </div>
 
-      {/* Statistics Cards */}
+      {/* ... (Rest of the file is unchanged) ... */}
       <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={FaTasks}
@@ -500,7 +612,7 @@ export default function EmployeeDashboard() {
                         {new Date(record.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {new Date(record.checkIn).toLocaleTimeString()} - {new Date(record.checkOut).toLocaleTimeString()}
+                        {new Date(record.checkIn).toLocaleTimeString()} - {record.checkOut ? new Date(record.checkOut).toLocaleTimeString() : 'Pending'}
                       </p>
                     </div>
                     <span className="font-semibold text-gray-900">{record.workHours} hrs</span>
@@ -514,8 +626,8 @@ export default function EmployeeDashboard() {
           </div>
         </div>
       </div>
-
-      {/* Task Status Breakdown */}
+      
+      {/* ... (Task Status Breakdown is unchanged) ... */}
       <div className="rounded-xl bg-white p-6 shadow-lg">
         <h2 className="mb-4 text-xl font-semibold text-gray-900">Task Status Overview</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

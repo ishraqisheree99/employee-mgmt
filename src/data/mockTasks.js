@@ -1,59 +1,103 @@
 // src/data/mockTasks.js
+
+// CHANGED: Assign tasks to 'alice.green@example.com'
+const employeeUsername = 'alice.green@example.com';
+
+// Get current date for relative dates
+const today = new Date();
+const getDateString = (daysFromNow) => {
+  const date = new Date(today);
+  date.setDate(date.getDate() + daysFromNow);
+  return date.toISOString().split('T')[0];
+};
+
 export const MOCK_TASKS = [
   {
     id: '1',
-    employeeId: 'employee', // username of employee
-    title: 'Complete Q4 Report',
-    description: 'Prepare and submit the quarterly report for Q4 2024',
+    employeeId: employeeUsername, // username (email) of employee
+    title: 'Fix Authentication Bug',
+    description: 'Investigate and fix the login issue where users are unable to authenticate after password reset. Check token expiration logic and session management.',
     status: 'in-progress',
     priority: 'high',
-    dueDate: '2024-12-31',
-    createdAt: '2024-12-01',
+    dueDate: getDateString(3),
+    createdAt: getDateString(-5),
     completedAt: null,
   },
   {
     id: '2',
-    employeeId: 'employee',
-    title: 'Update Project Documentation',
-    description: 'Review and update all project documentation',
+    employeeId: employeeUsername,
+    title: 'Implement User Profile Feature',
+    description: 'Develop the new user profile page with editable fields, avatar upload, and privacy settings. Use React hooks and ensure responsive design.',
     status: 'pending',
     priority: 'medium',
-    dueDate: '2024-12-20',
-    createdAt: '2024-12-05',
+    dueDate: getDateString(7),
+    createdAt: getDateString(-2),
     completedAt: null,
   },
   {
     id: '3',
-    employeeId: 'employee',
-    title: 'Team Meeting Preparation',
-    description: 'Prepare agenda and materials for weekly team meeting',
-    status: 'completed',
-    priority: 'low',
-    dueDate: '2024-12-10',
-    createdAt: '2024-12-08',
-    completedAt: '2024-12-10',
+    employeeId: employeeUsername,
+    title: 'Code Review: Payment Integration',
+    description: 'Review the payment integration PR from the backend team. Check for security vulnerabilities, error handling, and code quality.',
+    status: 'pending',
+    priority: 'high',
+    dueDate: getDateString(1),
+    createdAt: getDateString(-1),
+    completedAt: null,
   },
   {
     id: '4',
-    employeeId: 'employee',
-    title: 'Code Review',
-    description: 'Review pull requests from team members',
+    employeeId: employeeUsername,
+    title: 'Write Unit Tests for Dashboard Component',
+    description: 'Create comprehensive unit tests for the dashboard component using Jest and React Testing Library. Aim for 90%+ code coverage.',
     status: 'pending',
-    priority: 'high',
-    dueDate: '2024-12-15',
-    createdAt: '2024-12-12',
+    priority: 'medium',
+    dueDate: getDateString(5),
+    createdAt: getDateString(-3),
     completedAt: null,
   },
   {
     id: '5',
-    employeeId: 'employee',
-    title: 'Client Presentation',
-    description: 'Prepare presentation for client meeting',
+    employeeId: employeeUsername,
+    title: 'Update API Documentation',
+    description: 'Document the new REST API endpoints for the user management module. Include request/response examples and error codes.',
+    status: 'completed',
+    priority: 'low',
+    dueDate: getDateString(-2),
+    createdAt: getDateString(-7),
+    completedAt: getDateString(-1),
+  },
+  {
+    id: '6',
+    employeeId: employeeUsername,
+    title: 'Optimize Database Queries',
+    description: 'Review and optimize slow database queries in the employee management module. Add proper indexes and refactor N+1 query problems.',
     status: 'in-progress',
     priority: 'high',
-    dueDate: '2024-12-18',
-    createdAt: '2024-12-10',
+    dueDate: getDateString(4),
+    createdAt: getDateString(-4),
+    completedAt: null,
+  },
+  {
+    id: '7',
+    employeeId: employeeUsername,
+    title: 'Setup CI/CD Pipeline',
+    description: 'Configure GitHub Actions for automated testing and deployment. Set up staging and production environments with proper secrets management.',
+    status: 'pending',
+    priority: 'medium',
+    dueDate: getDateString(10),
+    createdAt: getDateString(-6),
+    completedAt: null,
+  },
+  {
+    id: '8',
+    employeeId: employeeUsername,
+    title: 'Refactor Legacy Components',
+    description: 'Refactor old class-based React components to functional components with hooks. Improve code maintainability and performance.',
+    status: 'pending',
+    priority: 'low',
+    dueDate: getDateString(14),
+    createdAt: getDateString(-8),
     completedAt: null,
   },
 ];
-

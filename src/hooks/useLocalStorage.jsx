@@ -34,6 +34,41 @@ function getStorageValue(key, defaultValue) {
       return parsed;
     }
     
+    // Special handling for tasks: merge with mock data to ensure all mock tasks are included
+    if (key === 'tasks' && Array.isArray(parsed) && Array.isArray(defaultValue)) {
+      // Create a map of existing tasks by id
+      const existingMap = new Map(parsed.map(task => [task.id, task]));
+      
+      // Add any tasks from mock data that don't exist in stored data
+      defaultValue.forEach(mockTask => {
+        if (!existingMap.has(mockTask.id)) {
+          parsed.push(mockTask);
+        }
+      });
+      
+      return parsed;
+    }
+    
+    // Special handling for attendance: merge with mock data to ensure all mock attendance records are included
+    if (key === 'attendance' && Array.isArray(parsed) && Array.isArray(defaultValue) && defaultValue.length > 0) {
+      // If parsed is empty or very small, prefer mock data (but keep any user-created records)
+      if (parsed.length === 0) {
+        return defaultValue;
+      }
+      
+      // Create a map of existing attendance records by id
+      const existingMap = new Map(parsed.map(record => [record.id, record]));
+      
+      // Add any attendance records from mock data that don't exist in stored data
+      defaultValue.forEach(mockRecord => {
+        if (!existingMap.has(mockRecord.id)) {
+          parsed.push(mockRecord);
+        }
+      });
+      
+      return parsed;
+    }
+    
     return parsed;
   } catch (e) {
     // If parsing fails, return default value
@@ -46,7 +81,7 @@ export const useLocalStorage = (key, defaultValue) => {
     return getStorageValue(key, defaultValue);
   });
 
-  // Initialize: merge mock data on first load if needed (only for employees)
+  // Initialize: merge mock data on first load if needed (for employees and tasks)
   useEffect(() => {
     if (key === 'employees' && Array.isArray(value) && Array.isArray(defaultValue)) {
       const existingIds = new Set(value.map(emp => emp.id));
@@ -69,6 +104,37 @@ export const useLocalStorage = (key, defaultValue) => {
           }
         });
         setValue(updated);
+      }
+    }
+    
+    // Merge mock tasks with existing tasks
+    if (key === 'tasks' && Array.isArray(value) && Array.isArray(defaultValue)) {
+      const existingIds = new Set(value.map(task => task.id));
+      const missingTasks = defaultValue.filter(mockTask => !existingIds.has(mockTask.id));
+      
+      if (missingTasks.length > 0) {
+        // Add missing mock tasks
+        const updated = [...value, ...missingTasks];
+        setValue(updated);
+      }
+    }
+    
+    // Merge mock attendance with existing attendance
+    if (key === 'attendance' && Array.isArray(value) && Array.isArray(defaultValue) && defaultValue.length > 0) {
+      // If value is empty, use mock data directly
+      if (value.length === 0) {
+        console.log('Attendance is empty, loading mock data:', defaultValue.length, 'records');
+        setValue(defaultValue);
+      } else {
+        const existingIds = new Set(value.map(record => record.id));
+        const missingAttendance = defaultValue.filter(mockRecord => !existingIds.has(mockRecord.id));
+        
+        if (missingAttendance.length > 0) {
+          console.log('Merging', missingAttendance.length, 'missing attendance records');
+          // Add missing mock attendance records
+          const updated = [...value, ...missingAttendance];
+          setValue(updated);
+        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
